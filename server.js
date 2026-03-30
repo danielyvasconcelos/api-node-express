@@ -1,5 +1,6 @@
 import express from 'express' //-> essa é a versão utlizada na aula, porém não funcionou, troquei por type module
 import publicRoutes from './routes/public.js'
+import privateRoutes from './routes/private.js'
 
 //const express = require("express") //-> antigamente as importanções eram assim 
 
@@ -11,6 +12,8 @@ app.use(express.json()) // avisando que vou usar json
 // '/' -> acesso direto ao cadastro
 
 app.use('/', publicRoutes)
+app.use('/', auth, privateRoutes)
+
 
 
 //chamada de metodo 

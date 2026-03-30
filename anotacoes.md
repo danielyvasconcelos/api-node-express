@@ -78,3 +78,5 @@ npm install jsonwebtoken
     generate a random JWT secret key : https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4 
         Execute o seguinte script Node.js para gerar uma string aleatória:
             node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+
+           token : iat e exp estão no formato  unix timestamp

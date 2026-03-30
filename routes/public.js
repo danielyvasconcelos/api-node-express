@@ -4,8 +4,8 @@ import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import jsonWebToken from 'jsonwebtoken'
 
-const prisma = new PrismaClient()
 const router = express.Router()
+const prisma = new PrismaClient()
 
  const JWT_SECRET = process.env.JWT_SECRET
 
@@ -38,7 +38,7 @@ router.post('/cadastro', async(req, res)=> {
     })
     res.status(201).json(userDB) //envia resposta ao usuario status ok 
 } catch(err){
-    res.status(500).json({message:"Erro no servidor, tente novamente"})
+    res.status(500).json({message:"Erro no servidor, tente novamente(endpoint cadastro)"})
 }
 })
 // nao se pega o dado password de user
@@ -72,9 +72,10 @@ router.post('/login', async(req, res)=>{
     //CAMADA EXTRA DE SEGURANÇA : secret -> é dado na hora que é gerado o token(criptografar) e na hora de descripitografar e verificar se é valido 
    const token = jsonWebToken.sign({id: user.id}, JWT_SECRET,{expiresIn: '1m'}) //tempo de duração do token
     res.status(200).json(user) // retorna o usuario que foi encontrado (temporario)
-    
+
    } catch(err){
-    res.status(500).json({message:"Erro no servidor, tente novamente"})
+    console.log(err)
+    res.status(500).json({message:' Erro no servidor, tente novamente(endpoint login)'})
 
    }
 
