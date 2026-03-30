@@ -1,12 +1,27 @@
 # Anotacoes - API Node + Express + Prisma
 
-## 1) Setup inicial
+## 1) Objetivo do projeto
+Criar uma API com:
+
+- cadastro de usuario
+- login com JWT
+- rota privada para listar usuarios
+
+## 2) Stack usada
+- Node.js
+- Express
+- Prisma
+- MongoDB Atlas
+- bcrypt
+- jsonwebtoken
+
+## 3) Setup inicial
 ```bash
 npm init -y
 npm install express
 ```
 
-Comando para rodar em modo watch:
+Rodar o servidor em modo watch:
 ```bash
 node --watch server.js
 ```
@@ -14,47 +29,87 @@ node --watch server.js
 Documentacao do Express:
 https://expressjs.com/pt-br/5x/api.html
 
-## 2) Rotas da aula
-Desenvolver 3 rotas:
+## 4) Modulos no Node
+O projeto usa `import/export`, entao no [package.json](package.json) precisa estar:
 
-- Rotas publicas
-    - 01 - Cadastro
-    - 02 - Login
-- Rotas privadas
-    - 03 - Listar usuario
+```json
+"type": "module"
+```
 
-## 3) Observacao sobre import/export (Node)
-Exemplo usado na aula:
+Se estiver como `commonjs`, o Node pode retornar erro com `import`.
+
+Exemplo:
 ```js
 import express from 'express'
 ```
 
-No Node 24, se ocorrer erro com `import`, verificar o [package.json](package.json):
+## 5) Estrutura atual do projeto
+- [server.js](server.js): ponto de entrada da API
+- [routes/public.js](routes/public.js): rotas publicas
+- [routes/private.js](routes/private.js): rotas privadas
+- [middlewares/auth.js](middlewares/auth.js): middleware de autenticacao
+- [prisma/schema.prisma](prisma/schema.prisma): schema do banco
+- [.env](.env): variaveis de ambiente
 
-- Se estiver com `"type": "commonjs"`, `import` pode falhar.
-- Para usar `import/export`, usar `"type": "module"`.
+## 6) Rotas da aula
+Rotas publicas:
 
-## 4) MongoDB
-Usuario: obviamente nao rei explanar kskksksks
+- `POST /cadastro`
+- `POST /login`
 
-Senha: aqui tambem nao 
+Rotas privadas:
 
-Connection string: e nem aqui, beijos 
+- `GET /listar-usuarios`
 
-## 5) Prisma
+## 7) Fluxo das rotas
+### Cadastro
+1. Recebe `email`, `name` e `password`.
+2. Gera hash da senha com bcrypt.
+3. Salva usuario no banco com Prisma.
+
+### Login
+1. Recebe `email` e `password`.
+2. Busca usuario pelo email.
+3. Compara senha digitada com senha hash do banco.
+4. Se estiver correta, gera token JWT.
+
+### Rota privada
+1. Recebe token no header `Authorization`.
+2. Middleware valida o token.
+3. Se o token for valido, libera acesso.
+
+## 8) Prisma + MongoDB
 Documentacao:
 https://www.prisma.io/docs/prisma-orm/add-to-existing-project/mongodb#3-connect-your-database
 
-Comandos:
+Comandos principais:
 ```bash
 npm install prisma --save-dev
 npx prisma init
 npm install @prisma/client
+npx prisma generate
 npx prisma db push
 npx prisma studio
 ```
 
-## 6) Bcrypt
+Observacao:
+- `db push` sincroniza o schema com o banco.
+- se o model mudar, rodar `npx prisma db push` novamente.
+
+## 9) Schema atual
+Model principal:
+
+```prisma
+model User {
+    id       String @id @default(auto()) @map("_id") @db.ObjectId
+    email    String @unique
+    name     String?
+    password String
+    posts    Post[]
+}
+```
+
+## 10) Bcrypt
 Documentacao:
 https://www.npmjs.com/package/bcrypt
 
@@ -63,20 +118,124 @@ Instalacao:
 npm install bcrypt
 ```
 
-## 7) Tratamento de erro
-Usar `try` e `catch` nas rotas assincronas.
+Uso:
+- `bcrypt.hash()` para gerar hash da senha
+- `bcrypt.compare()` para comparar senha digitada com hash salvo
 
+## 11) JWT
+Documentacao:
+https://www.jwt.io/
 
-
-token JWT de autenticação -> https://www.jwt.io/ 
- Rota de login - Token JWT para autenticação
-// Logica: todo login o usuario ganha um token de autenticação 
-// REQUISIÇÃO -> o usuario efetua o login, uma requisição é enviada para o servidor, la as credenciais são verificadas 
-// RESPOSTA -> depois da verificação, o servidor retorna a resposta com um token, toda vez que o usuario fizer uma requisição para o back end para acessar uma rota privada a identificação e permição se dar pelo token 
-// Token : ele é separado em trÊs partes: header, payload e signature 
+Instalacao:
+```bash
 npm install jsonwebtoken
-    generate a random JWT secret key : https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4 
-        Execute o seguinte script Node.js para gerar uma string aleatória:
-            node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
-           token : iat e exp estão no formato  unix timestamp
+Ideia principal:
+- no login, o servidor gera um token
+- o cliente envia esse token nas rotas privadas
+- o middleware valida o token antes de liberar acesso
+
+Gerar uma chave secreta aleatoria:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Observacao:
+- `iat` = instante em que o token foi criado
+- `exp` = instante de expiracao
+- ambos aparecem em formato Unix timestamp
+
+## 12) Variaveis de ambiente
+Exemplos usados no projeto:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+
+Importante:
+- o arquivo `.env` deve ficar no `.gitignore`
+- nunca subir senha ou connection string para o GitHub
+
+## 13) Tratamento de erro
+Usar `try/catch` nas rotas assincronas.
+
+Exemplo de casos comuns:
+- erro ao conectar no MongoDB Atlas
+- usuario nao encontrado
+- senha invalida
+- token invalido
+
+## 14) Testes no Postman
+### Cadastro
+Metodo:
+```http
+POST /cadastro
+```
+
+Body:
+```json
+{
+    "email": "teste@email.com",
+    "name": "Daniely",
+    "password": "123456"
+}
+```
+
+### Login
+Metodo:
+```http
+POST /login
+```
+
+Body:
+```json
+{
+    "email": "teste@email.com",
+    "password": "123456"
+}
+```
+
+### Rota privada
+Metodo:
+```http
+GET /listar-usuarios
+```
+
+Header:
+```http
+Authorization: Bearer SEU_TOKEN
+```
+
+## 15) Erros que ja apareceram no projeto
+### `Cannot use import statement outside a module`
+Causa:
+- projeto estava como CommonJS
+
+Correcao:
+- usar `"type": "module"` no [package.json](package.json)
+
+### Prisma nao reconhecia `password`
+Causa:
+- o campo nao existia no schema ou o client nao tinha sido regenerado
+
+Correcao:
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### `Server selection timeout` no MongoDB
+Causa mais comum:
+- problema de conexao com o Atlas
+- IP nao liberado
+- usuario/senha incorretos
+
+## 16) Checklist rapido
+Sempre que algo quebrar, revisar nesta ordem:
+
+1. `package.json` com `"type": "module"`
+2. `.env` com `DATABASE_URL` e `JWT_SECRET`
+3. `npx prisma generate`
+4. `npx prisma db push`
+5. `node server.js`
+6. testar no Postman
