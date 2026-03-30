@@ -2,9 +2,12 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
+import jsonWebToken from 'jsonwebtoken'
 
 const prisma = new PrismaClient()
 const router = express.Router()
+
+ const JWT_SECRET = process.env.JWT_SECRET
 
 
 //Cadastro
@@ -18,7 +21,7 @@ req -> que significa request/requisição : recebe tudo que vem de fora, os dado
 res -> que siginifica response/resposta : é o que usamos para enviar de volta exemplo: cadastri realizado com sucesso ou um erro 400
  */
 
-router.post('/cadastro', async (req, res)=> {
+router.post('/cadastro', async(req, res)=> {
     try{
     const user = req.body
 
@@ -40,5 +43,45 @@ router.post('/cadastro', async (req, res)=> {
 })
 // nao se pega o dado password de user
 
+// Rota de login - Token JWT para autenticação
+// Logica: todo login o usuario ganha um token de autenticação 
+// REQUISIÇÃO -> o usuario efetua o login, uma requisição é enviada para o servidor, la as credenciais são verificadas 
+// RESPOSTA -> depois da verificação, o servidor retorna a resposta com um token, toda vez que o usuario fizer uma requisição para o back end para acessar uma rota privada a identificação e permição se dar pelo token 
+// Token : ele é separado em trÊs partes: header, payload e signature 
+
+router.post('/login', async(req, res)=>{
+    
+   try{
+     const userInfor= req.body
+    // Busca usuario no banco de dados
+     const user = await prisma.user.findUnique({
+        where: {email: userInfor.email},
+    })
+    // Verifica se o usuario existe dentro do banco de dados
+    if(!user){
+        return res.status(404).json({message:'Usuário não encontrado '})
+    }
+
+    // Compara senha do banco com a que o usuario digitou
+    const isMatch =  await bcrypt.compare(userInfor, password, user.password)
+    if(!isMatch){
+        return res.status(400).json({messsage: 'senha Invalida'})
+
+    }
+    // gerar o token de JWT
+    //CAMADA EXTRA DE SEGURANÇA : secret -> é dado na hora que é gerado o token(criptografar) e na hora de descripitografar e verificar se é valido 
+   const token = jsonWebToken.sign({id: user.id}, JWT_SECRET,{expiresIn: '1m'}) //tempo de duração do token
+    res.status(200).json(user) // retorna o usuario que foi encontrado (temporario)
+    
+   } catch(err){
+    res.status(500).json({message:"Erro no servidor, tente novamente"})
+
+   }
+
+
+})
+//Rota de login
+// prisma.user.findUnique -> no prisma em busca de um unico usuario
+//where: {email: userInfor.email} -> por onde porcurar essas informações, neste caso, pelo email pelo  const userInfor= req.body
 
 export default router

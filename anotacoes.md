@@ -65,3 +65,16 @@ npm install bcrypt
 
 ## 7) Tratamento de erro
 Usar `try` e `catch` nas rotas assincronas.
+
+
+
+token JWT de autenticação -> https://www.jwt.io/ 
+ Rota de login - Token JWT para autenticação
+// Logica: todo login o usuario ganha um token de autenticação 
+// REQUISIÇÃO -> o usuario efetua o login, uma requisição é enviada para o servidor, la as credenciais são verificadas 
+// RESPOSTA -> depois da verificação, o servidor retorna a resposta com um token, toda vez que o usuario fizer uma requisição para o back end para acessar uma rota privada a identificação e permição se dar pelo token 
+// Token : ele é separado em trÊs partes: header, payload e signature 
+npm install jsonwebtoken
+    generate a random JWT secret key : https://dev.to/tkirwa/generate-a-random-jwt-secret-key-39j4 
+        Execute o seguinte script Node.js para gerar uma string aleatória:
+            node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
