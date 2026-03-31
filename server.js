@@ -1,6 +1,7 @@
 import express from 'express' //-> essa é a versão utlizada na aula, porém não funcionou, troquei por type module
 import publicRoutes from './routes/public.js'
 import privateRoutes from './routes/private.js'
+import auth from './middlewares/auth.js'
 
 //const express = require("express") //-> antigamente as importanções eram assim 
 

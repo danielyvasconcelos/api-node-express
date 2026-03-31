@@ -63,15 +63,15 @@ router.post('/login', async(req, res)=>{
     }
 
     // Compara senha do banco com a que o usuario digitou
-    const isMatch =  await bcrypt.compare(userInfor, password, user.password)
+    const isMatch = await bcrypt.compare(userInfor.password, user.password)
     if(!isMatch){
         return res.status(400).json({messsage: 'senha Invalida'})
 
     }
     // gerar o token de JWT
     //CAMADA EXTRA DE SEGURANÇA : secret -> é dado na hora que é gerado o token(criptografar) e na hora de descripitografar e verificar se é valido 
-   const token = jsonWebToken.sign({id: user.id}, JWT_SECRET,{expiresIn: '1m'}) //tempo de duração do token
-    res.status(200).json(user) // retorna o usuario que foi encontrado (temporario)
+    const token = jsonWebToken.sign({id: user.id}, JWT_SECRET,{expiresIn: '1m'}) //tempo de duração do token
+     res.status(200).json({ token })
 
    } catch(err){
     console.log(err)
